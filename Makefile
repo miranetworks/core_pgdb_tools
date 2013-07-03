@@ -16,7 +16,7 @@ clean:
 	rm -fr erl_crash.dump
 	./rebar clean
 
-test: 
+test: all 
 	mkdir -p .eunit
 	./rebar skip_deps=true eunit
 
