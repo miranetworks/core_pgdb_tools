@@ -9,6 +9,10 @@
 
     return_connection/1, return_connection/2
 ]).
+-ifdef(TEST).
+-export([handle_error/2]).
+-endif.
+
 -include_lib("epgsql/include/pgsql.hrl").
 
 -define(POOL, default).
