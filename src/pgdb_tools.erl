@@ -60,7 +60,7 @@ equery(Sql, Params, Pool) ->
     end.
 
 %%
-%% @doc Wrapper for pgsql:squery/2
+%% @doc Wrapper for pgsql:squery/2 using the default pool
 %%
 %% It also catches exotic errors and try to handle it in a sane way.
 %% Important: squery does not map results to Erlang types, as equery does.
@@ -73,6 +73,13 @@ equery(Sql, Params, Pool) ->
 squery(Sql) ->
     squery(Sql, ?POOL).
 
+
+%%
+%% @doc Wrapper for pgsql:squery/2 using a specified pool
+%%
+%% It also catches exotic errors and try to handle it in a sane way.
+%% Important: squery does not map results to Erlang types, as equery does.
+%%
 -spec squery(Sql::iolist()|binary(), Pool::atom()) ->  {ok, Columns::[any()], Rows::[any()]} |
                                 {ok, Count::non_neg_integer()} |
                                 {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
