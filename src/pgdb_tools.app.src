@@ -1,0 +1,7 @@
+{application, pgdb_tools,
+ [{description, "PostgreSQL tools"},
+  {vsn, "0.1.0"},
+  {modules, [pgdb_tools]},
+  {registered, []},
+  {applications, [epgsql, epgsql_pool]},
+  {included_applications, []}]}.

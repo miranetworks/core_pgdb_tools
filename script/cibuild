@@ -1,0 +1,8 @@
+#!/bin/bash
+
+export PATH="/home/erlang/lib/R14B04/bin:$PATH"
+apt-get update
+apt-get -y install postgresql-contrib
+sudo -u postgres psql -f test/bootstrap_database.sql
+rm -rf deps
+make test
