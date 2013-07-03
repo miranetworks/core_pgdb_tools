@@ -45,11 +45,11 @@ equery(Sql, Params) ->
                                                  {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
                                                  {error, Error::any()}.
 equery(Sql, Params, Pool) ->
-    case dbutils:get_connection(Pool) of
+    case get_connection(Pool) of
         {ok, Con} ->
             Result = pgsql:equery(Con, Sql, Params),
             ok = handle_error(Con, Result),
-            ok = dbutils:return_connection(Con, Pool),
+            ok = return_connection(Con, Pool),
             Result;
         Other -> 
             Other
@@ -74,11 +74,11 @@ squery(Sql) ->
                                 {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
                                 {error, Error::any()}.
 squery(Sql, Pool) ->
-    case dbutils:get_connection(Pool) of
+    case get_connection(Pool) of
         {ok, Con} -> 
             Result = pgsql:squery(Con, Sql),
             ok = handle_error(Con, Result),
-            ok = dbutils:return_connection(Con, Pool),
+            ok = return_connection(Con, Pool),
             Result;
         Other -> 
             Other

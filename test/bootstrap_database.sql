@@ -22,7 +22,7 @@ SET ROLE pgdb_tools;
 
 
 CREATE TABLE pgdb_tools_test (
-    int INTEGER,
+    int INTEGER PRIMARY KEY,
     day DATE,
     message TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
