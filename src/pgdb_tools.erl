@@ -114,7 +114,7 @@ get_connection() ->
 -spec get_connection(Pool::atom()) -> {ok, Pid::pid()} | {error, any()}.
 
 get_connection(Pool) ->
-    DefaultRetryCount = 5,
+    DefaultRetryCount = 3,
     % DefaultTimeout specified in POOL configuration.
     DefaultTimeout = 1000,
     get_connection(Pool, DefaultRetryCount, DefaultTimeout).
