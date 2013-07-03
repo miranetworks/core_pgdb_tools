@@ -20,7 +20,8 @@
 %% 
 %% @doc Return a list of proplists representing the Columns and Rows supplied
 %%
--spec transduce(Colums::[#column{}], Rows::[tuple()]) -> [list({binary(), any()})].
+-spec transduce(Colums::[#column{}], Rows::[tuple()]) ->
+    [list({binary(), any()})].
 
 transduce(_Colums, []) ->
     [];
@@ -33,10 +34,11 @@ transduce(Columns, Rows) ->
 %%
 %% It also catches exotic errors and try to handle it in a sane way.
 %%
--spec equery(Sql::iolist()|binary(), Params::[any()]) ->  {ok, Columns::[any()], Rows::[any()]} |
-                                                 {ok, Count::non_neg_integer()} |
-                                                 {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
-                                                 {error, Error::any()}.
+-spec equery(Sql::iolist()|binary(), Params::[any()]) ->  
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
 
 equery(Sql, Params) ->
     equery(Sql, Params, ?POOL).
@@ -44,10 +46,12 @@ equery(Sql, Params) ->
 %%
 %% @doc Wrapper for pgsql:equery/3 using a specified pool 
 %%
--spec equery(Sql::iolist()|binary(), Params::[any()], Pool::atom()) ->  {ok, Columns::[any()], Rows::[any()]} |
-                                                 {ok, Count::non_neg_integer()} |
-                                                 {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
-                                                 {error, Error::any()}.
+-spec equery(Sql::iolist()|binary(), Params::[any()], Pool::atom()) ->
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
+
 equery(Sql, Params, Pool) ->
     case get_connection(Pool) of
         {ok, Con} ->
@@ -65,10 +69,11 @@ equery(Sql, Params, Pool) ->
 %% It also catches exotic errors and try to handle it in a sane way.
 %% Important: squery does not map results to Erlang types, as equery does.
 %%
--spec squery(Sql::iolist()|binary()) ->  {ok, Columns::[any()], Rows::[any()]} |
-                                {ok, Count::non_neg_integer()} |
-                                {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
-                                {error, Error::any()}.
+-spec squery(Sql::iolist()|binary()) ->
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
 
 squery(Sql) ->
     squery(Sql, ?POOL).
@@ -80,10 +85,12 @@ squery(Sql) ->
 %% It also catches exotic errors and try to handle it in a sane way.
 %% Important: squery does not map results to Erlang types, as equery does.
 %%
--spec squery(Sql::iolist()|binary(), Pool::atom()) ->  {ok, Columns::[any()], Rows::[any()]} |
-                                {ok, Count::non_neg_integer()} |
-                                {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
-                                {error, Error::any()}.
+-spec squery(Sql::iolist()|binary(), Pool::atom()) ->
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
+
 squery(Sql, Pool) ->
     case get_connection(Pool) of
         {ok, Con} -> 
@@ -114,7 +121,9 @@ handle_error(Con, Response) ->
 %%
 %% @doc Get a database connection from the default pool, using the default retry and timeout.
 %%
--spec get_connection() -> {ok, Pid::pid()} | {error, any()}.
+-spec get_connection() ->
+    {ok, Pid::pid()} |
+    {error, any()}.
 
 get_connection() ->
     get_connection(?POOL).
@@ -122,7 +131,9 @@ get_connection() ->
 %%
 %% @doc Get a database connection from the speified pool, using the default retry and timeout. 
 %%
--spec get_connection(Pool::atom()) -> {ok, Pid::pid()} | {error, any()}.
+-spec get_connection(Pool::atom()) ->
+    {ok, Pid::pid()} |
+    {error, any()}.
 
 get_connection(Pool) ->
     DefaultRetryCount = 3,
@@ -133,7 +144,9 @@ get_connection(Pool) ->
 %%
 %% @doc Get a database connection from the specified pool, trying RetryCount times with Timeout timeouts
 %%
--spec get_connection(Pool::atom(), RetryCount::non_neg_integer(), Timeout::non_neg_integer()) -> {ok, Pid::pid()} | {error, any()}.
+-spec get_connection(Pool::atom(), RetryCount::non_neg_integer(), Timeout::non_neg_integer()) ->
+    {ok, Pid::pid()} | 
+    {error, any()}.
 
 get_connection(Pool, 0, Timeout) ->
     pgsql_pool:get_connection(Pool, Timeout);
