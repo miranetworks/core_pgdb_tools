@@ -10,7 +10,10 @@
 
     get_connection/0, get_connection/1, get_connection/3,
 
-    return_connection/1, return_connection/2
+    return_connection/1, return_connection/2,
+
+    date_to_string/1,
+    timestamp_to_string/1
 ]).
 -ifdef(TEST).
 -export([handle_error/2]).
@@ -226,4 +229,27 @@ return_connection(Con) ->
 return_connection(Con, Pool) ->
     pgsql_pool:return_connection(Pool, Con).
 
+%%
+%% @doc Convert a Postgres date to its string representation.
+%%
+%% {Y, M, D} => "YYYY-MM-DD"
+%%
+-spec date_to_string(Date::calendar:date()) -> string().
 
+date_to_string({Y,M,D})
+when is_integer(Y), Y>0,
+     is_integer(M), 12>=M, M>=1,
+     is_integer(D), 31>=D, D>=1 ->
+    lists:flatten(io_lib:format("~4.10.0B-~2.10.0B-~2.10.0B", [Y, M, D])).
+
+%%
+%% @doc Convert a Postgres timestamp to its string representation.
+%%
+%% {{Y, Mo, D}, {H, Mi, S}} => "YYYY-MO-DDTHH:MI:SS.mmm"
+%%
+-spec timestamp_to_string({Date::calendar:date(), {H::non_neg_integer(), M::non_neg_integer(), FloatSecs::float()}}) -> string().
+
+timestamp_to_string({{Y,Mo,D}, {H, Mi, S}})
+when is_integer(Y), is_integer(Mo), is_integer(D),
+     is_integer(H), is_integer(Mi), is_float(S) ->
+    lists:flatten(io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~6.3.0f", [Y, Mo, D, H, Mi, S])).

@@ -223,7 +223,15 @@ with_transaction_starvation_test_() ->
 
      ?assertEqual(1, ?POOLSIZE),
      {ok, Con} = pgdb_tools:get_connection(),
-     ?assertEqual({error, timeout}, pgdb_tools:with_transaction(fun(Con) -> ok end)),
+     ?assertEqual({error, timeout}, pgdb_tools:with_transaction(fun(_) -> ok end)),
      ?assertEqual(ok, pgdb_tools:return_connection(Con))
 
      end]}.
+
+
+date_to_string_test() ->
+    ?assertEqual("2013-01-01", pgdb_tools:date_to_string({2013, 01, 01})).
+
+tiemstamp_to_string_test() ->
+    ?assertEqual("2013-01-01T13:14:15.679", 
+                 pgdb_tools:timestamp_to_string({{2013, 01, 01}, {13, 14, 15.678912}})).
