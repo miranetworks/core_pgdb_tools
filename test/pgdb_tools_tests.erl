@@ -184,3 +184,46 @@ handle_error_test() ->
     ?assertEqual(ok, pgdb_tools:handle_error(unused, {ok, something})).
 
 
+with_transaction_rollback_test() ->
+    Sql = "SELECT int, message 
+           FROM pgdb_tools_test
+           ORDER BY int",
+    ?assertMatch({ok, _, [{1,<<"One">>}, {2,<<"Two">>}, {3,<<"Three">>}]}, pgdb_tools:equery(Sql, [])),
+
+    Fun = fun(Con) ->
+            [{ok, 1} = pgdb_tools:transaction_equery("UPDATE pgdb_tools_test SET message=upper(message) WHERE int=$1", [X], Con) || X <- lists:seq(1,3)],
+            {ok, _, [{1,<<"ONE">>}, {2,<<"TWO">>}, {3,<<"THREE">>}]} = pgdb_tools:transaction_equery(Sql, [], Con),
+            throw(crap)
+    end,
+    ?assertEqual({rollback, crap}, pgdb_tools:with_transaction(Fun)),
+    ?assertMatch({ok, _, [{1,<<"One">>}, {2,<<"Two">>}, {3,<<"Three">>}]}, pgdb_tools:equery(Sql, [])),
+    ok.
+
+
+with_transaction_commit_test() ->
+    Sql = "SELECT int, message 
+           FROM pgdb_tools_test
+           ORDER BY int",
+    ?assertMatch({ok, _, [{1,<<"One">>}, {2,<<"Two">>}, {3,<<"Three">>}]}, pgdb_tools:equery(Sql, [])),
+
+    Fun = fun(Con) ->
+            Updates = [{ok, 1} = pgdb_tools:transaction_equery("UPDATE pgdb_tools_test SET message=reverse(message) WHERE int=$1", [X], Con) || X <- lists:seq(1,3)],
+            {ok, length(Updates)}
+    end,
+    ?assertEqual({ok, 3}, pgdb_tools:with_transaction(Fun)),
+    ?assertMatch({ok, _, [{1,<<"enO">>}, {2,<<"owT">>}, {3,<<"eerhT">>}]}, pgdb_tools:equery(Sql, [])),
+
+    ?assertEqual({ok, 3}, pgdb_tools:with_transaction(Fun)),
+    ?assertMatch({ok, _, [{1,<<"One">>}, {2,<<"Two">>}, {3,<<"Three">>}]}, pgdb_tools:equery(Sql, [])),
+    ok.
+
+
+with_transaction_starvation_test_() ->
+    {timeout, 10, [fun () ->
+
+     ?assertEqual(1, ?POOLSIZE),
+     {ok, Con} = pgdb_tools:get_connection(),
+     ?assertEqual({error, timeout}, pgdb_tools:with_transaction(fun(Con) -> ok end)),
+     ?assertEqual(ok, pgdb_tools:return_connection(Con))
+
+     end]}.
