@@ -4,7 +4,10 @@
 
     equery/2, equery/3,
     squery/1, squery/2,
-    
+
+    with_transaction/1, with_transaction/2,
+    transaction_equery/3,
+
     get_connection/0, get_connection/1, get_connection/3,
 
     return_connection/1, return_connection/2
@@ -101,6 +104,54 @@ squery(Sql, Pool) ->
         Other -> 
             Other
     end.
+
+
+%%
+%% @doc Wrapper for pgsql:with_transaction/2 using the default pool.
+%%
+-spec with_transaction(Fun::fun((Con::pid()) -> Result::any())) ->  
+    Result::any() |
+    {rollback, Error::any()} |
+    {error, Error::any()}.
+
+with_transaction(Fun) when is_function(Fun) ->
+    with_transaction(Fun, ?POOL).
+
+%%
+%% @doc Wrapper for pgsql:with_transaction/2 using a specified pool.
+%%
+%% It is important to only use transaction_equery/3 within the fun for database interaction.
+%% Use the connection argument passed to the fun as the 3rd argument to transaction_equery/3.
+%%
+-spec with_transaction(Fun::fun((Con::pid()) -> Result::any()), Pool::atom()) ->  
+    Result::any() |
+    {rollback, Error::any()} |
+    {error, Error::any()}.
+
+with_transaction(Fun, Pool) when is_function(Fun) ->
+    case get_connection(Pool) of
+        {ok, Con} -> 
+            Result = pgsql:with_transaction(Con, Fun),
+            ok = return_connection(Con, Pool),
+            Result;
+        Other -> 
+            Other
+    end.
+
+%%
+%% @doc Wrapper for pgsql:equery/3 for use with with_transaction/2,3.
+%%
+-spec transaction_equery(Sql::iolist()|binary(), Params::[any()], Con::pid()) ->
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
+
+transaction_equery(Sql, Params, Con) ->
+    Result = pgsql:equery(Con, Sql, Params),
+    ok = handle_error(Con, Result),
+    Result.
+
 
 -spec handle_error(Con::pid(), Response::any()) -> ok.
 
