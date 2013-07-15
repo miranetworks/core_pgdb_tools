@@ -235,3 +235,27 @@ date_to_string_test() ->
 tiemstamp_to_string_test() ->
     ?assertEqual("2013-01-01T13:14:15.679", 
                  pgdb_tools:timestamp_to_string({{2013, 01, 01}, {13, 14, 15.678912}})).
+
+
+proplist_to_hstore_test() ->
+    PropList = [{<<"c a">>, <<"3">>}, {"d", "4 5"}], % Mixture of binary() and string()
+    Hstore = pgdb_tools:proplist_to_hstore(PropList),
+    ?assertEqual("hstore(ARRAY[['c a','3'], ['d','4 5']]::text[])",
+                 lists:flatten(Hstore)),
+    {ok, _, [{Val1}]} = pgdb_tools:equery(["SELECT ", Hstore], []),
+    % By default the hstore type is returned as a binary
+    ?assertEqual(<<"\"d\"=>\"4 5\", \"c a\"=>\"3\"">>,
+                 Val1),
+    % I prefer the matrix representation (converted to a proplist using list_to_tuple
+    {ok, _, [{Val2}]} = pgdb_tools:equery(["SELECT hstore_to_matrix(", Hstore, ")"], []),
+    % At this point Val2 is [[<<"d">>,<<"4 5">>],[<<"c a">>,<<"3">>]]
+    % We convert this to a proplist
+    P = pgdb_tools:hstore_matrix_to_proplist(Val2),
+    ?assertEqual([{<<"d">>,<<"4 5">>},{<<"c a">>,<<"3">>}],
+                 P).
+
+
+empty_proplist_to_hstore_test() ->
+    PropList = [], % Empty proplist
+    ?assertEqual("hstore(ARRAY[]::text[])",
+                 lists:flatten(pgdb_tools:proplist_to_hstore(PropList))).

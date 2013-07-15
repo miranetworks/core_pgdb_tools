@@ -18,6 +18,8 @@ GRANT ALL ON DATABASE pgdb_tools TO pgdb_tools;
 --
 \connect pgdb_tools;
 
+CREATE EXTENSION hstore;
+
 SET ROLE pgdb_tools;
 
 

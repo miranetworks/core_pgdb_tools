@@ -13,7 +13,10 @@
     return_connection/1, return_connection/2,
 
     date_to_string/1,
-    timestamp_to_string/1
+    timestamp_to_string/1,
+
+    proplist_to_hstore/1,
+    hstore_matrix_to_proplist/1
 ]).
 -ifdef(TEST).
 -export([handle_error/2]).
@@ -253,3 +256,27 @@ timestamp_to_string({{Y,Mo,D}, {H, Mi, S}})
 when is_integer(Y), is_integer(Mo), is_integer(D),
      is_integer(H), is_integer(Mi), is_float(S) ->
     lists:flatten(io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~6.3.0f", [Y, Mo, D, H, Mi, S])).
+
+
+%%
+%% @doc Convert a proplist to its HSTORE representation
+%%
+-spec proplist_to_hstore(PropList::list({Key::binary()|string(), Value::binary()|string()})) -> iolist().
+
+proplist_to_hstore(PropList) ->
+    Map = fun({K, V}) ->
+        io_lib:format("['~s','~s']", [K, V])
+    end,
+
+    ["hstore(ARRAY[", string:join(lists:map(Map, PropList), ", "), "]::text[])"].
+
+%%
+%% @doc Convert an HSTORE matrix representation to a proplist
+%%
+%% The hstore matrix representation is the result of the hstore_to_matrix() SQL function.
+%%
+-spec hstore_matrix_to_proplist(HstoreMatrix::list(list(binary()))) -> list({binary(), binary()}).
+
+hstore_matrix_to_proplist(HstoreMatrix) ->
+    lists:map(fun erlang:list_to_tuple/1, HstoreMatrix).
+
