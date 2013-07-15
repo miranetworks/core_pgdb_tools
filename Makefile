@@ -1,5 +1,5 @@
 
-.PHONY: all ctags app clean test deps
+.PHONY: all ctags app clean test deps analyze
 
 # Default build target
 all: clean deps ctags
@@ -20,3 +20,5 @@ test: all
 	mkdir -p .eunit
 	./rebar skip_deps=true eunit
 
+analyze: all
+	dialyzer ebin/ --fullpath
