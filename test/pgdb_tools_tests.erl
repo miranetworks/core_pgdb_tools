@@ -232,7 +232,7 @@ with_transaction_starvation_test_() ->
 date_to_string_test() ->
     ?assertEqual("2013-01-01", pgdb_tools:date_to_string({2013, 01, 01})).
 
-tiemstamp_to_string_test() ->
+timestamp_to_string_test() ->
     ?assertEqual("2013-01-01T13:14:15.679", 
                  pgdb_tools:timestamp_to_string({{2013, 01, 01}, {13, 14, 15.678912}})).
 
