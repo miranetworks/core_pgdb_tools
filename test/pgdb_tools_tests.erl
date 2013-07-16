@@ -259,3 +259,20 @@ empty_proplist_to_hstore_test() ->
     PropList = [], % Empty proplist
     ?assertEqual("hstore(ARRAY[]::text[])",
                  lists:flatten(pgdb_tools:proplist_to_hstore(PropList))).
+
+
+timestamp_to_now_success_test() ->
+    ?assertEqual({0, 0, 0},
+                 pgdb_tools:timestamp_to_now({{1970, 1, 1}, {0, 0, 0.0}})).
+
+timestamp_to_now_success1_test() ->
+    ?assertEqual({0, 0, 123456},
+                 pgdb_tools:timestamp_to_now({{1970, 1, 1}, {0, 0, 0.123456}})).
+
+timestamp_to_now_success2_test() ->
+    ?assertEqual({0, 10, 123456},
+                 pgdb_tools:timestamp_to_now({{1970, 1, 1}, {0, 0, 10.123456}})).
+
+timestamp_to_now_success3_test() ->
+    ?assertEqual({0, 86410, 123456},
+                 pgdb_tools:timestamp_to_now({{1970, 1, 2}, {0, 0, 10.123456}})).

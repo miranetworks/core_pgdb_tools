@@ -14,6 +14,7 @@
 
     date_to_string/1,
     timestamp_to_string/1,
+    timestamp_to_now/1,
 
     proplist_to_hstore/1,
     hstore_matrix_to_proplist/1
@@ -256,6 +257,31 @@ timestamp_to_string({{Y,Mo,D}, {H, Mi, S}})
 when is_integer(Y), is_integer(Mo), is_integer(D),
      is_integer(H), is_integer(Mi), is_float(S) ->
     lists:flatten(io_lib:format("~4.10.0B-~2.10.0B-~2.10.0BT~2.10.0B:~2.10.0B:~6.3.0f", [Y, Mo, D, H, Mi, S])).
+
+
+%%
+%% @doc Converts a Postgres database timestamp to a representation as returned by the erlang:now/0 function.
+%%
+%% {{Y, Mo, D}, {H, Mi, S}} => {{MegaSecs, Secs, MicroSecs}
+%%       
+%% @see erlang:now/0
+%%
+-spec timestamp_to_now({Date::calendar:date(), {H::non_neg_integer(), M::non_neg_integer(), FloatSecs::float()}}) -> 
+    {MegaSecs::non_neg_integer(),
+     Secs::non_neg_integer(),
+     MicroSecs::non_neg_integer()}.
+
+timestamp_to_now({{Y, Mo, D}, {H, Mi, FloatSecs}})
+when is_integer(Y), is_integer(Mo), is_integer(D),
+     is_integer(H), is_integer(Mi), is_float(FloatSecs) ->
+    IntSecs = trunc(FloatSecs),
+    TsInSeconds = calendar:datetime_to_gregorian_seconds({{Y, Mo, D}, {H, Mi, IntSecs}}) -
+                  62167219200, % calendar:datetime_to_gregorian_seconds({{1970, 1, 1},{0,0,0}})
+
+    MegaSecs = TsInSeconds div 1000000,
+    Secs = TsInSeconds - MegaSecs * 1000000,
+    MicroSecs = trunc(FloatSecs * 1000000 - IntSecs * 1000000), % Needs to be done this way to prevent precision loss.
+    {MegaSecs, Secs, MicroSecs}.
 
 
 %%
