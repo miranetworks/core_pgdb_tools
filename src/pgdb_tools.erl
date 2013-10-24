@@ -26,6 +26,7 @@
 -include_lib("epgsql/include/pgsql.hrl").
 
 -define(POOL, default).
+-define(QT, "SaFe"). % The PostgreSQL Quote Tag to use with unsafe strings
 
 %% 
 %% @doc Return a list of proplists representing the Columns and Rows supplied
@@ -291,7 +292,7 @@ when is_integer(Y), is_integer(Mo), is_integer(D),
 
 proplist_to_hstore(PropList) ->
     Map = fun({K, V}) ->
-        io_lib:format("['~s','~s']", [K, V])
+        io_lib:format("[$"?QT"$~s$"?QT"$,$"?QT"$~s$"?QT"$]", [K, V])
     end,
 
     ["hstore(ARRAY[", string:join(lists:map(Map, PropList), ", "), "]::text[])"].

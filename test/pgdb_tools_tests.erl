@@ -3,6 +3,8 @@
 -include_lib("epgsql/include/pgsql.hrl").
 -define(POOLSIZE, 1).
 
+-define(QT, "SaFe"). % The dollar quote tag used.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Helper functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -240,7 +242,7 @@ timestamp_to_string_test() ->
 proplist_to_hstore_test() ->
     PropList = [{<<"c a">>, <<"3">>}, {"d", "4 5"}], % Mixture of binary() and string()
     Hstore = pgdb_tools:proplist_to_hstore(PropList),
-    ?assertEqual("hstore(ARRAY[['c a','3'], ['d','4 5']]::text[])",
+    ?assertEqual("hstore(ARRAY[[$"?QT"$c a$"?QT"$,$"?QT"$3$"?QT"$], [$"?QT"$d$"?QT"$,$"?QT"$4 5$"?QT"$]]::text[])",
                  lists:flatten(Hstore)),
     {ok, _, [{Val1}]} = pgdb_tools:equery(["SELECT ", Hstore], []),
     % By default the hstore type is returned as a binary
@@ -252,6 +254,23 @@ proplist_to_hstore_test() ->
     % We convert this to a proplist
     P = pgdb_tools:hstore_matrix_to_proplist(Val2),
     ?assertEqual([{<<"d">>,<<"4 5">>},{<<"c a">>,<<"3">>}],
+                 P).
+
+proplist_to_hstore_quotes_test() ->
+    PropList = [{<<"c'a">>, <<"3'">>}, {"'d", "'4 5'"}], % Mixture of binary() and string()
+    Hstore = pgdb_tools:proplist_to_hstore(PropList),
+    ?assertEqual("hstore(ARRAY[[$"?QT"$c'a$"?QT"$,$"?QT"$3'$"?QT"$], [$"?QT"$'d$"?QT"$,$"?QT"$'4 5'$"?QT"$]]::text[])",
+                 lists:flatten(Hstore)),
+    {ok, _, [{Val1}]} = pgdb_tools:equery(["SELECT ", Hstore], []),
+    % By default the hstore type is returned as a binary
+    ?assertEqual(<<"\"'d\"=>\"'4 5'\", \"c'a\"=>\"3'\"">>,
+                 Val1),
+    % I prefer the matrix representation (converted to a proplist using list_to_tuple
+    {ok, _, [{Val2}]} = pgdb_tools:equery(["SELECT hstore_to_matrix(", Hstore, ")"], []),
+    % At this point Val2 is [[<<"d">>,<<"4 5">>],[<<"c a">>,<<"3">>]]
+    % We convert this to a proplist
+    P = pgdb_tools:hstore_matrix_to_proplist(Val2),
+    ?assertEqual([{<<"'d">>,<<"'4 5'">>},{<<"c'a">>,<<"3'">>}],
                  P).
 
 
