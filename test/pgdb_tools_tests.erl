@@ -36,6 +36,8 @@ setup_test() ->
     ?assertEqual(ok, application:set_env(sasl, errlog_type, error)),
     ?assertEqual(ok, ensure_started(sasl)),
 
+    ?assertEqual(ok, ensure_started(crypto)),
+    ?assertEqual(ok, ensure_started(asn1)),
     ?assertEqual(ok, ensure_started(public_key)),
     ?assertEqual(ok, ensure_started(ssl)),
     ?assertEqual(ok, ensure_started(inets)),
@@ -92,7 +94,7 @@ connection_default_test() ->
 
 
 connection_special_test() ->
-    {ok, Con} = pgdb_tools:get_connection(special),
+    {ok, Con} = pgdb_tools:get_connection(special, infinity),
     ?assertEqual(ok, pgdb_tools:return_connection(Con, special)).
 
 
@@ -101,7 +103,7 @@ connection_starvation_test_() ->
 
      ?assertEqual(1, ?POOLSIZE),
      {ok, Con} = pgdb_tools:get_connection(),
-     ?assertEqual({error, timeout}, pgdb_tools:get_connection()),
+     ?assertEqual({error, timeout}, pgdb_tools:get_connection(default, 1000)),
      ?assertEqual(ok, pgdb_tools:return_connection(Con))
 
      end]}.
@@ -112,7 +114,7 @@ squery_same_results_test() ->
              FROM pgdb_tools_test
             ORDER BY day",
     {ok, Cols1, Rows1} = pgdb_tools:squery(Sql),
-    {ok, Cols2, Rows2} = pgdb_tools:squery(Sql, special),
+    {ok, Cols2, Rows2} = pgdb_tools:squery(Sql, special, infinity),
 
     ?assertEqual(Cols1, Cols2),
     ?assertEqual(Rows1, Rows2).
@@ -123,7 +125,7 @@ squery_starvation_test_() ->
 
      ?assertEqual(1, ?POOLSIZE),
      {ok, Con} = pgdb_tools:get_connection(),
-     ?assertEqual({error, timeout}, pgdb_tools:squery("SELECT * FROM pgdb_tools_test")),
+     ?assertEqual({error, timeout}, pgdb_tools:squery("SELECT * FROM pgdb_tools_test", 1000)),
      ?assertEqual(ok, pgdb_tools:return_connection(Con))
 
      end]}.
@@ -136,7 +138,7 @@ equery_same_results_test() ->
             ORDER BY day",
 
     {ok, Cols1, Rows1} = pgdb_tools:equery(Sql, [1]),
-    {ok, Cols2, Rows2} = pgdb_tools:equery(Sql, [1], special),
+    {ok, Cols2, Rows2} = pgdb_tools:equery(Sql, [1], special, infinity),
 
     ?assertEqual(Cols1, Cols2),
     ?assertEqual(Rows1, Rows2).
@@ -147,7 +149,7 @@ equery_starvation_test_() ->
 
      ?assertEqual(1, ?POOLSIZE),
      {ok, Con} = pgdb_tools:get_connection(),
-     ?assertEqual({error, timeout}, pgdb_tools:equery("SELECT * FROM pgdb_tools_test WHERE $1 = $1", ["foo"])),
+     ?assertEqual({error, timeout}, pgdb_tools:equery("SELECT * FROM pgdb_tools_test WHERE $1 = $1", ["foo"], 1000)),
      ?assertEqual(ok, pgdb_tools:return_connection(Con))
 
      end]}.
@@ -225,7 +227,7 @@ with_transaction_starvation_test_() ->
 
      ?assertEqual(1, ?POOLSIZE),
      {ok, Con} = pgdb_tools:get_connection(),
-     ?assertEqual({error, timeout}, pgdb_tools:with_transaction(fun(_) -> ok end)),
+     ?assertEqual({error, timeout}, pgdb_tools:with_transaction(fun(_) -> ok end, 1000)),
      ?assertEqual(ok, pgdb_tools:return_connection(Con))
 
      end]}.
