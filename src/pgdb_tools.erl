@@ -2,13 +2,13 @@
 -export([
     transduce/2,
 
-    equery/2, equery/3,
-    squery/1, squery/2,
+    equery/2, equery/3, equery/4,
+    squery/1, squery/2, squery/3,
 
-    with_transaction/1, with_transaction/2,
+    with_transaction/1, with_transaction/2, with_transaction/3,
     transaction_equery/3,
 
-    get_connection/0, get_connection/1, get_connection/3,
+    get_connection/0, get_connection/2,
 
     return_connection/1, return_connection/2,
 
@@ -26,6 +26,7 @@
 -include_lib("epgsql/include/pgsql.hrl").
 
 -define(POOL, default).
+-define(TIMEOUT, infinity).  % The maximum time (in ms) to wait for a connection from the pool.
 -define(QT, "SaFe"). % The PostgreSQL Quote Tag to use with unsafe strings
 
 %% 
@@ -41,7 +42,7 @@ transduce(Columns, Rows) ->
     [ lists:zip(ColumnNames, erlang:tuple_to_list(Row)) || Row <- Rows].
 
 %%
-%% @doc Wrapper for pgsql:equery/3 using the default pool
+%% @doc Wrapper for pgsql:equery/3 using the default pool and timeout
 %%
 %% It also catches exotic errors and try to handle it in a sane way.
 %%
@@ -52,19 +53,33 @@ transduce(Columns, Rows) ->
     {error, Error::any()}.
 
 equery(Sql, Params) ->
-    equery(Sql, Params, ?POOL).
+    equery(Sql, Params, ?POOL, ?TIMEOUT).
 
 %%
-%% @doc Wrapper for pgsql:equery/3 using a specified pool 
+%% @doc Wrapper for pgsql:equery/3 using the default pool and a specified timeout
 %%
--spec equery(Sql::iolist()|binary(), Params::[any()], Pool::atom()) ->
+%% It also catches exotic errors and try to handle it in a sane way.
+%%
+-spec equery(Sql::iolist()|binary(), Params::[any()], Timeout::pos_integer()) ->  
     {ok, Columns::[any()], Rows::[any()]} |
     {ok, Count::non_neg_integer()} |
     {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
     {error, Error::any()}.
 
-equery(Sql, Params, Pool) ->
-    case get_connection(Pool) of
+equery(Sql, Params, Timeout) ->
+    equery(Sql, Params, ?POOL, Timeout).
+
+%%
+%% @doc Wrapper for pgsql:equery/3 using a specified pool and timeout
+%%
+-spec equery(Sql::iolist()|binary(), Params::[any()], Pool::atom(), Timeout::pos_integer()) ->
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
+
+equery(Sql, Params, Pool, Timeout) ->
+    case get_connection(Pool, Timeout) of
         {ok, Con} ->
             Result = pgsql:equery(Con, Sql, Params),
             ok = handle_error(Con, Result),
@@ -75,7 +90,7 @@ equery(Sql, Params, Pool) ->
     end.
 
 %%
-%% @doc Wrapper for pgsql:squery/2 using the default pool
+%% @doc Wrapper for pgsql:squery/2 using the default pool and timeout
 %%
 %% It also catches exotic errors and try to handle it in a sane way.
 %% Important: squery does not map results to Erlang types, as equery does.
@@ -87,23 +102,39 @@ equery(Sql, Params, Pool) ->
     {error, Error::any()}.
 
 squery(Sql) ->
-    squery(Sql, ?POOL).
+    squery(Sql, ?POOL, ?TIMEOUT).
 
 
 %%
-%% @doc Wrapper for pgsql:squery/2 using a specified pool
+%% @doc Wrapper for pgsql:squery/2 using the default pool and a specified timeout
 %%
 %% It also catches exotic errors and try to handle it in a sane way.
 %% Important: squery does not map results to Erlang types, as equery does.
 %%
--spec squery(Sql::iolist()|binary(), Pool::atom()) ->
+-spec squery(Sql::iolist()|binary(), Timeout::pos_integer()) ->
     {ok, Columns::[any()], Rows::[any()]} |
     {ok, Count::non_neg_integer()} |
     {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
     {error, Error::any()}.
 
-squery(Sql, Pool) ->
-    case get_connection(Pool) of
+squery(Sql, Timeout) ->
+    squery(Sql, ?POOL, Timeout).
+
+
+%%
+%% @doc Wrapper for pgsql:squery/2 using a specified pool and timeout
+%%
+%% It also catches exotic errors and try to handle it in a sane way.
+%% Important: squery does not map results to Erlang types, as equery does.
+%%
+-spec squery(Sql::iolist()|binary(), Pool::atom(), Timeout::pos_integer()) ->
+    {ok, Columns::[any()], Rows::[any()]} |
+    {ok, Count::non_neg_integer()} |
+    {ok, Count::non_neg_integer(), Columns::[any()], Rows::[any()]} |
+    {error, Error::any()}.
+
+squery(Sql, Pool, Timeout) ->
+    case get_connection(Pool, Timeout) of
         {ok, Con} -> 
             Result = pgsql:squery(Con, Sql),
             ok = handle_error(Con, Result),
@@ -115,7 +146,7 @@ squery(Sql, Pool) ->
 
 
 %%
-%% @doc Wrapper for pgsql:with_transaction/2 using the default pool.
+%% @doc Wrapper for pgsql:with_transaction/2 using the default pool and timeout.
 %%
 -spec with_transaction(Fun::fun((Con::pid()) -> Result::any())) ->  
     Result::any() |
@@ -123,21 +154,32 @@ squery(Sql, Pool) ->
     {error, Error::any()}.
 
 with_transaction(Fun) when is_function(Fun) ->
-    with_transaction(Fun, ?POOL).
+    with_transaction(Fun, ?POOL, ?TIMEOUT).
 
 %%
-%% @doc Wrapper for pgsql:with_transaction/2 using a specified pool.
+%% @doc Wrapper for pgsql:with_transaction/2 using the default pool and a specified timeout.
 %%
-%% It is important to only use transaction_equery/3 within the fun for database interaction.
-%% Use the connection argument passed to the fun as the 3rd argument to transaction_equery/3.
-%%
--spec with_transaction(Fun::fun((Con::pid()) -> Result::any()), Pool::atom()) ->  
+-spec with_transaction(Fun::fun((Con::pid()) -> Result::any()), Timeout::pos_integer()) ->  
     Result::any() |
     {rollback, Error::any()} |
     {error, Error::any()}.
 
-with_transaction(Fun, Pool) when is_function(Fun) ->
-    case get_connection(Pool) of
+with_transaction(Fun, Timeout) when is_function(Fun) ->
+    with_transaction(Fun, ?POOL, Timeout).
+
+%%
+%% @doc Wrapper for pgsql:with_transaction/2 using a specified pool and timeout
+%%
+%% It is important to only use transaction_equery/3 within the fun for database interaction.
+%% Use the connection argument passed to the fun as the 3rd argument to transaction_equery/3.
+%%
+-spec with_transaction(Fun::fun((Con::pid()) -> Result::any()), Pool::atom(), Timeout::pos_integer()) ->  
+    Result::any() |
+    {rollback, Error::any()} |
+    {error, Error::any()}.
+
+with_transaction(Fun, Pool, Timeout) when is_function(Fun) ->
+    case get_connection(Pool, Timeout) of
         {ok, Con} -> 
             Result = pgsql:with_transaction(Con, Fun),
             ok = return_connection(Con, Pool),
@@ -178,45 +220,24 @@ handle_error(Con, Response) ->
 
 
 %%
-%% @doc Get a database connection from the default pool, using the default retry and timeout.
+%% @doc Get a database connection from the default pool, using the default timeout.
 %%
 -spec get_connection() ->
     {ok, Pid::pid()} |
     {error, any()}.
 
 get_connection() ->
-    get_connection(?POOL).
+    get_connection(?POOL, ?TIMEOUT).
 
 %%
-%% @doc Get a database connection from the speified pool, using the default retry and timeout. 
+%% @doc Get a database connection from the specified pool, using a specified timeout
 %%
--spec get_connection(Pool::atom()) ->
+-spec get_connection(Pool::atom(), Timeout::pos_integer()) ->
     {ok, Pid::pid()} |
     {error, any()}.
 
-get_connection(Pool) ->
-    DefaultRetryCount = 3,
-    % DefaultTimeout specified in POOL configuration.
-    DefaultTimeout = 1000,
-    get_connection(Pool, DefaultRetryCount, DefaultTimeout).
-
-%%
-%% @doc Get a database connection from the specified pool, trying RetryCount times with Timeout timeouts
-%%
--spec get_connection(Pool::atom(), RetryCount::non_neg_integer(), Timeout::non_neg_integer()) ->
-    {ok, Pid::pid()} | 
-    {error, any()}.
-
-get_connection(Pool, 0, Timeout) ->
-    pgsql_pool:get_connection(Pool, Timeout);
-get_connection(Pool, RetryCount, Timeout)
-when is_integer(RetryCount), RetryCount > 0,
-     is_integer(Timeout), Timeout >= 0 ->
-
-    case pgsql_pool:get_connection(Pool, Timeout) of
-        {error, timeout} -> get_connection(Pool, RetryCount-1, Timeout);
-        Other -> Other
-    end.
+get_connection(Pool, Timeout) ->
+    pgsql_pool:get_connection(Pool, Timeout).
 
 %%
 %% @doc Return a connection to the default pool.

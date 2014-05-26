@@ -1,6 +1,6 @@
 {application, pgdb_tools,
  [{description, "PostgreSQL tools"},
-  {vsn, "0.3.1"},
+  {vsn, "1.0.0"},
   {modules, [pgdb_tools]},
   {registered, []},
   {applications, [epgsql, epgsql_pool]},
