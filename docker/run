@@ -1,0 +1,13 @@
+#!/bin/bash
+
+REL=`lsb_release`
+
+if [ $? -eq 0 ]; then
+
+    docker run --rm=true -t -i -u="developer" --name pgdb_tools -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK) -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK -v $(pwd)/../:/workspace/base  pgdb_tools $1
+
+else
+
+    boot2docker ssh -A -t "docker run --rm=true -t -i --name pgdb_tools -v \$(dirname \${SSH_AUTH_SOCK}):\$(dirname \${SSH_AUTH_SOCK}) -e SSH_AUTH_SOCK=\${SSH_AUTH_SOCK} -v $(pwd)/../:/workspace/base  pgdb_tools $1"
+
+fi

@@ -16,9 +16,12 @@ clean:
 	rm -fr erl_crash.dump
 	./rebar clean
 
-test: all 
+test: all
+	sudo /etc/init.d/postgresql start
+	sudo -u postgres psql -f test/bootstrap_database.sql
 	mkdir -p .eunit
 	./rebar skip_deps=true eunit
 
 analyze: all
 	dialyzer ebin/ --fullpath
+include docker/docker.mk
