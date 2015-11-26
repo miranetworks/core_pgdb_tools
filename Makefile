@@ -16,6 +16,11 @@ clean:
 	rm -fr erl_crash.dump
 	./rebar clean
 
+deps-clean: clean
+	@./rebar -q delete-deps
+
+citest: deps-clean test
+
 test: all
 	sudo /etc/init.d/postgresql start
 	sudo -u postgres psql -f test/bootstrap_database.sql

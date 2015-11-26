@@ -1,4 +1,0 @@
-#!/bin/bash
-export DOCKER_DEV_UID=$(id -u ${USER})
-cat Dockerfile.template | envsubst | docker build $@ -t pgdb_tools -
-unset DOCKER_DEV_UID

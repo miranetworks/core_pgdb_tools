@@ -1,13 +1,54 @@
 #!/bin/bash
+if [ $# -lt 4 ]; then
+    echo "Usage: $0 docker_image docker_container_name command_to_run fix_permissions [docker_options]"
+    echo "   Where fix_permissions = [true | false]"
+    echo "         docker_options are options that can be passed to 'docker run'"
+    exit 1
+fi
+
+DOCKER_IMAGE=$1
+DOCKER_CONTAINER_NAME=$2
+DOCKER_COMMAND=$3
+DOCKER_FIX_PERMS=$4
+shift 4
+docker rm -f ${DOCKER_CONTAINER_NAME} 2>/dev/null || true
 
 REL=`lsb_release`
 
 if [ $? -eq 0 ]; then
-
-    docker run --rm=true -t -i -u="developer" --name pgdb_tools -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK) -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK -v $(pwd)/../:/workspace/base  pgdb_tools $1
-
+    WRKDIR=`readlink -f $(pwd)`
+    docker run \
+        --rm=true \
+        -i \
+        -h devhost \
+        -v /etc/localtime:/etc/localtime:ro \
+        -v /etc/timezone:/etc/timezone:ro \
+        --name ${DOCKER_CONTAINER_NAME} \
+        -v $(dirname $SSH_AUTH_SOCK):$(dirname $SSH_AUTH_SOCK) \
+        -e SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+        -w /workspace/base \
+        -v ${WRKDIR}:/workspace/base  \
+        $@ \
+        ${DOCKER_IMAGE} ${DOCKER_COMMAND}
+    if [ "${DOCKER_FIX_PERMS}" != "false" ]; then
+    docker run -i --rm=true --name ${DOCKER_CONTAINER_NAME} \
+        -w /workspace/base \
+        -v ${WRKDIR}:/workspace/base \
+        ${DOCKER_IMAGE} chown -R $(id -u):$(id -g) .
+    fi
 else
-
-    boot2docker ssh -A -t "docker run --rm=true -t -i --name pgdb_tools -v \$(dirname \${SSH_AUTH_SOCK}):\$(dirname \${SSH_AUTH_SOCK}) -e SSH_AUTH_SOCK=\${SSH_AUTH_SOCK} -v $(pwd)/../:/workspace/base  pgdb_tools $1"
-
+    WRKDIR=$(pwd)
+    boot2docker ssh -A -t " \
+        docker run \
+            --rm=true \
+            -i \
+            -h devhost \
+            --name ${DOCKER_CONTAINER_NAME} \
+            -v \$(dirname \${SSH_AUTH_SOCK}):\$(dirname \${SSH_AUTH_SOCK}) \
+            -e SSH_AUTH_SOCK=\${SSH_AUTH_SOCK} \
+            -w /workspace/base \
+            -v ${WRKDIR}:/workspace/base  \
+            $@ \
+            ${DOCKER_IMAGE} ${DOCKER_COMMAND}"
 fi
+
