@@ -1,0 +1,3 @@
+_build/prod/rel/pgdb_tools home/pgdbtools
+debian/erlang_env.sh home/pgdbtools/pgdb_tools
+debian/pgdb_tools_limits.conf etc/security/limits.d

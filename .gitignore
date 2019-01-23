@@ -1,7 +1,7 @@
-.eunit
-deps
-ebin
-*.o
-*.beam
-*.plt
-tags
+*.sw?
+/.rebar3/
+/_build/
+/rebar.lock
+/tags
+.tags
+*~

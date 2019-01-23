@@ -1,0 +1,5 @@
+pgdb-tools (#DEB_VERSION#) mira-stretch; urgency=low
+
+  * Debhelper requires a changelog, we don't.
+
+ -- Mira Networks <mira.support@gmail.com>  #DEB_DATETIME#

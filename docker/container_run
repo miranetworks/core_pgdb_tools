@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ $# -ne 4 ]; then
+    echo "Usage: $0 BASE_DIR HOST_UID HOST_GID CMD"
+    echo 
+    echo "After CMD is executed, a 'chown -R HOST_UID:HOST_GID BASE_DIR' will be done"
+    echo "the reason for this is that commands are run inside the container as root"
+    exit 1
+fi
+
+BASE_DIR=$1
+HOST_UID=$2
+HOST_GID=$3
+CMD=$4
+
+$CMD
+
+chown -R ${HOST_UID}:${HOST_GID} ${BASE_DIR}

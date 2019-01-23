@@ -1,32 +1,27 @@
+.PHONY: all test citest clean distclean tags
 
-.PHONY: all ctags app clean test deps analyze
+all:
+	rebar3 compile
 
-# Default build target
-all: clean deps ctags
-	./rebar compile
-
-ctags:
-	- ctags -R src/ deps/ test/
-
-deps:
-	./rebar get-deps
-
-clean:
-	rm -fr .eunit
-	rm -fr erl_crash.dump
-	./rebar clean
-
-deps-clean: clean
-	@./rebar -q delete-deps
-
-citest: deps-clean test
-
-test: all
+test:
 	sudo /etc/init.d/postgresql start
 	sudo -u postgres psql -f test/bootstrap_database.sql
-	mkdir -p .eunit
-	./rebar skip_deps=true eunit
+	rebar3 do eunit $(if $(suite),--suite=$(suite)), cover
 
-analyze: all
-	dialyzer ebin/ --fullpath
+citest: clean
+	sudo /etc/init.d/postgresql start
+	sudo -u postgres psql -f test/bootstrap_database.sql
+	rebar3 as test do eunit, covertool generate
+
+clean:
+	rebar3 clean
+
+distclean: clean
+	rm -fR .rebar3/ _build/ rebar.lock tags
+
+tags:
+	ctags -R include/ src/
+
 include docker/docker.mk
+
+include debian/debian.mk

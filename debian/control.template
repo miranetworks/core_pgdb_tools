@@ -1,0 +1,13 @@
+Source: pgdb-tools
+Section: unknown
+Priority: extra
+Maintainer: Mira Networks <mira.support@gmail.com>
+Build-Depends: debhelper (>= 7), mira-erlang-#ERL_VERSION#, mira-rebar3
+Standards-Version: 3.9.2
+Vcs-Git: git@github.com:miranetworks/pgdb_tools.git
+
+Package: pgdb-tools
+Architecture: any
+Pre-Depends: passwd
+Depends: mira-erlang-#ERL_VERSION#, ${shlibs:Depends}, ${misc:Depends}
+Description: The PostgreSQL tools provided are aimed at query result manipulation and abstracting database connection handling.

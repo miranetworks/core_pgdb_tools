@@ -1,7 +1,17 @@
-{application, pgdb_tools,
- [{description, "PostgreSQL tools"},
-  {vsn, "1.0.0"},
-  {modules, [pgdb_tools]},
-  {registered, []},
-  {applications, [epgsql, epgsql_pool]},
-  {included_applications, []}]}.
+% vim: ft=erlang
+{application, pgdb_tools, [
+    {description, "PostgreSQL tools"},
+    {vsn, "1.0.0"},
+    {registered, []},
+    {applications, [
+        kernel
+       ,stdlib
+       ,epgsql
+       ,epgsql_pool
+    ]},
+    {env, []},
+    {modules, [pgdb_tools]},
+    {maintainers, []},
+    {licenses, []},
+    {links, []}
+]}.

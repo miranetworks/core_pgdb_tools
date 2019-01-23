@@ -1,0 +1,39 @@
+% vim: ft=erlang
+{app_name, "pgdb_tools"}.  % Name of the application/library, usually prefixed with 'mira_'
+{app_desc, "The PostgreSQL tools provided are aimed at query result manipulation and abstracting database connection handling."}.  % Short description of the application/library's purpose
+{git_repo, "git@github.com:miranetworks/pgdb_tools.git"}.  % Git repository
+{mod_prefix, "pgdb_tools"}.  % Source files will be prefixed to avoid module name collisions
+{library, true}.  % Bootstrap an OTP library instead of application
+
+{release, false}.  % Include release building
+
+{docker, true}.  % Include docker dev environment
+{dev_distro, "debian"}.  % OS distro for docker
+{dev_release, "stretch"}.  % OS release for docker
+
+{deb_package, deb}.  % Include deb package building
+{pkg_name, "pgdb-tools"}.  % Package name, usually the app_name with underscores replaced by dashes
+{os_user, "pgdbtools"}.  % OS user under which the application runs
+{ppa_release, "stretch"}.  % OS release for PPA
+
+{cfg_bus, false}.  % Include config bus
+
+{mochiweb, false}.  % Include either mochiweb or webmachine HTTP front-end
+{http_port,  8080}.  % Port to listen on for HTTP connections
+{https_port, 1443}.  % Port to listen on for HTTPS connections
+{access_log, true}.  % Include dedicated access log
+
+{queues, false}.  % Include queue utils
+{snmp_object, "PgdbTools"}.  % SNMP object name with the first letter capitalized
+
+{logging, true}.  % Include application log and kernel log rotation
+
+{backup, false}.  % Include backup config
+
+{monitoring, false}.  % Include application monotoring
+
+{uuid, false}.  % Include UUID server
+
+{statsman, false}.  % Include statsman client
+
+{vault, false}.  % Include vault utils. Mochiweb has been integrated with. Webmachine you are on your own.
